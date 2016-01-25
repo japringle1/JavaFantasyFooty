@@ -1,21 +1,17 @@
 package scraper;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 
-/**
- * Created by Jonny on 07/11/15.
- */
 public class Scraper {
 
     public Scraper(TabPane tabPane) {
@@ -26,7 +22,6 @@ public class Scraper {
         Tab tab = new Tab();
         tab.setText("Scraper");
         HBox hbox = new HBox();
-        hbox.getChildren().add(new Label("Scraper"));
         addScraperButton(hbox);
         hbox.setAlignment(Pos.CENTER);
         tab.setContent(hbox);
@@ -41,21 +36,26 @@ public class Scraper {
     }
 
     private void startScraping() {
-        Thread scraperThread = new Thread(() -> {
-            int playerIndex = 1;
+        Task<Void> scraperTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                int playerIndex = 1;
 
-            while (true) {
-                try {
-                    String playerString = readPlayerUrl(playerIndex);
-                    JSONObject playerJson = new JSONObject(playerString);
-                } catch (Exception e) {
-                    break;
+                while (true) {
+                    try {
+                        String playerString = readPlayerUrl(playerIndex);
+                        JSONObject playerJson = (JSONObject) new JSONParser().parse(playerString);
+                        System.out.println(playerJson);
+                    } catch (Exception e) {
+                        break;
+                    }
+                    playerIndex++;
                 }
-                playerIndex++;
+                return null;
             }
-        });
+        };
 
-        scraperThread.start();
+        new Thread(scraperTask).start();
     }
 
     private String readPlayerUrl(int playerIndex) throws IOException {
