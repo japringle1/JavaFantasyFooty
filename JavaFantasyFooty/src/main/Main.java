@@ -1,5 +1,6 @@
 package main;
 
+import data.PlayerRepository;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -11,9 +12,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import scraper.Scraper;
+import scraper.ScraperController;
 
 public class Main extends Application {
+
+    private ScraperController scraperController;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -24,9 +27,9 @@ public class Main extends Application {
         BorderPane borderPane = new BorderPane();
 
         addMainTab(tabPane);
-        addScraperTab(tabPane);
+        PlayerRepository playerRepository = new PlayerRepository();
+        addScraperTab(tabPane, playerRepository);
 
-        // bind to take available space
         borderPane.prefHeightProperty().bind(scene.heightProperty());
         borderPane.prefWidthProperty().bind(scene.widthProperty());
 
@@ -46,8 +49,8 @@ public class Main extends Application {
         tabPane.getTabs().add(tab);
     }
 
-    private void addScraperTab(TabPane tabPane) {
-        new Scraper(tabPane);
+    private void addScraperTab(TabPane tabPane, PlayerRepository playerRepository) {
+        scraperController = new ScraperController(tabPane, playerRepository);
     }
 
     public static void main(String[] args) {
