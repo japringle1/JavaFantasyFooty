@@ -1,13 +1,14 @@
 package scraper;
 
+import data.Player;
 import data.PlayerRepository;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,17 +20,18 @@ import java.net.URL;
 
 public class ScraperController
 {
-    static Task scraperWorker;
+    private Task scraperWorker;
 
     private final PlayerRepository playerRepository;
-    private final ProgressBar progressBar;
+    private ProgressIndicator progressBar;
     private Button scrapeButton;
     private Button cancelButton;
+    private final ObservableList<Player> players;
 
     public ScraperController(TabPane tabPane, PlayerRepository playerRepository)
     {
         this.playerRepository = playerRepository;
-        this.progressBar = new ProgressBar();
+        players = FXCollections.observableArrayList();
         initialiseTab(tabPane);
     }
 
@@ -39,23 +41,31 @@ public class ScraperController
         tab.setText("Scraper");
         tabPane.getTabs().add(tab);
 
-        BorderPane mainPane = new BorderPane();
-        tab.setContent(mainPane);
+        GridPane scraperPane = new GridPane();
+        scraperPane.setHgap(5);
+        scraperPane.setVgap(20);
+        scraperPane.setAlignment(Pos.CENTER);
+        tab.setContent(scraperPane);
 
-        HBox buttonsHBox = new HBox();
-        buttonsHBox.setSpacing(5);
-        buttonsHBox.setAlignment(Pos.CENTER);
-        mainPane.setCenter(buttonsHBox);
+        TableView<Player> playersTable = new TableView<>(players);
+        playersTable.setPrefWidth(500);
+        TableColumn playerNameCol = new TableColumn("Name");
+        TableColumn teamCol = new TableColumn("Team");
+        playersTable.getColumns().addAll(playerNameCol, teamCol);
 
+        scraperPane.add(playersTable, 0, 0);
         createScraperButton();
         createCancelButton();
+        HBox buttonsBox = new HBox(scrapeButton, cancelButton);
+        buttonsBox.setSpacing(5);
+        buttonsBox.setAlignment(Pos.CENTER);
+        scraperPane.add(buttonsBox, 0, 1);
 
-        buttonsHBox.getChildren().addAll(scrapeButton, cancelButton, progressBar);
+        progressBar = new ProgressIndicator();
+        progressBar.setVisible(false);
 
-        HBox progressHBox = new HBox();
-        progressHBox.setAlignment(Pos.CENTER);
-        mainPane.setBottom(progressHBox);
-        progressHBox.getChildren().add(progressBar);
+        GridPane.setHalignment(progressBar, HPos.CENTER);
+        scraperPane.add(progressBar, 0, 2);
     }
 
     private void createScraperButton()
@@ -75,6 +85,7 @@ public class ScraperController
     private void createCancelButton()
     {
         cancelButton = new Button("Cancel");
+        cancelButton.setDisable(true);
 
         cancelButton.setOnAction(event -> {
             scrapeButton.setDisable(false);
@@ -82,6 +93,42 @@ public class ScraperController
 
             scraperWorker.cancel(true);
         });
+    }
+
+    private Task createWorker()
+    {
+        return new Task<Void>()
+        {
+            @Override
+            protected Void call() throws Exception
+            {
+                progressBar.setVisible(true);
+                playerRepository.clearPlayers();
+                int playerIndex = 1;
+
+                while (true)
+                {
+                    if (isCancelled())
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        String playerString = readPlayerUrl(playerIndex);
+                        JSONObject playerJson = (JSONObject) new JSONParser().parse(playerString);
+                        players.add(new Player(playerJson));
+                        System.out.println(playerJson);
+                    } catch (Exception e)
+                    {
+                        break;
+                    }
+                    playerIndex++;
+                }
+                progressBar.setVisible(false);
+                return null;
+            }
+        };
     }
 
     private String readPlayerUrl(int playerIndex) throws IOException
@@ -92,41 +139,10 @@ public class ScraperController
         int read;
         char[] chars = new char[1024];
         while ((read = reader.read(chars)) != -1)
+        {
             buffer.append(chars, 0, read);
+        }
 
         return buffer.toString();
-    }
-
-    private Task createWorker()
-    {
-        return new Task<Void>()
-        {
-            @Override
-            protected Void call() throws Exception
-            {
-                playerRepository.clearPlayers();
-                int playerIndex = 1;
-
-                while (true)
-                {
-                    if (isCancelled())
-                    {
-                        break;
-                    }
-                    try
-                    {
-                        String playerString = readPlayerUrl(playerIndex);
-                        JSONObject playerJson = (JSONObject) new JSONParser().parse(playerString);
-                        playerRepository.addPlayerFromJsonObject(playerJson);
-                        System.out.println(playerJson);
-                    } catch (Exception e)
-                    {
-                        break;
-                    }
-                    playerIndex++;
-                }
-                return null;
-            }
-        };
     }
 }

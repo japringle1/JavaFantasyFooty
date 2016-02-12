@@ -22,7 +22,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         primaryStage.setTitle("Fantasy Premier League Assistant");
         Group root = new Group();
-        Scene scene = new Scene(root, 500, 500, Color.ALICEBLUE);
+        Scene scene = new Scene(root, 750, 750, Color.ALICEBLUE);
         TabPane tabPane = new TabPane();
         BorderPane borderPane = new BorderPane();
 
