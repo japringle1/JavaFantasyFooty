@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class PlayerTest
 {
-    public static String AGUERO_JSON =
+    public static final String AGUERO_JSON =
             "{" +
                     "\"id\":222," +
                     "\"photo\":\"37572.jpg\"," +
@@ -137,5 +137,17 @@ public class PlayerTest
     public void givenAgueroJson_whenParsed_thenTeamIsManCity() throws Exception
     {
         assertThat(player.getTeam()).isEqualTo(Team.MAN_CITY);
+    }
+
+    @Test
+    public void givenAgueroJson_whenParsed_thenCostIs136() throws Exception
+    {
+        assertThat(player.getCost()).isEqualTo(136);
+    }
+
+    @Test
+    public void givenAgueroJson_whenParsed_thenFixtureListCorrect() throws Exception
+    {
+//        assertThat(player.getFixtures())
     }
 }
